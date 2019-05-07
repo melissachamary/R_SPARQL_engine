@@ -4,7 +4,7 @@
 \alias{addConstraintFrame}
 \title{addConstraintFrame}
 \usage{
-addConstraintFrame(object, data, keep)
+addConstraintFrame(object, data, keep = NA)
 }
 \description{
 add set of constraint in the object

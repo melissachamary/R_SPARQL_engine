@@ -12,7 +12,7 @@ setClass("SPARQL_query_builder", representation=
                            constraintDescription = data.frame(typeConstraint=character(),groupConstraint = character(), string=character()))
          )
 )
-#### Prefix slot setter, getter
+#### Prefix slot setter, getter #####
 #' @title getPrefix
 #' @return prefix data.frame for the query
 #' @export
@@ -108,11 +108,11 @@ object
 ## @input keep : elements that should be return by the query, if keep is empty all query eement will be return (?XXX)
 #' @export
 setGeneric(name="addConstraintFrame",
-           def=function(object, data, keep){
+           def=function(object, data, keep=NA){
              standardGeneric("addConstraintFrame")
            })
-setMethod(f="addConstraintFrame",signature="SPARQL_query_builder",function(object, data, keep){
-
+setMethod(f="addConstraintFrame",signature="SPARQL_query_builder",function(object, data, keep=NA){
+  print(data)
   if(is.data.frame(data) && nrow(data)>0 && length(which(c("subj","pred","obj")%in%colnames(data)))==3){
     cst<-getConstraint(object)
     cst$constraintDescription<-rbind(cst$constraintDescription,
@@ -135,9 +135,7 @@ setMethod(f="addConstraintFrame",signature="SPARQL_query_builder",function(objec
       cst$element<-unique(c(cst$element,unique(queryKeep)))
     }else{
       print("query keep issue")
-      #print(queryKeep)
       print(keep)
-      #print(unlist(as.vector(data)))
       print(queryKeep[which(!queryKeep %in% unlist(as.vector(data)))])
     }
     parameter<-character()
@@ -171,7 +169,7 @@ isFixedValue<-function(x){
 }
 
 
-#### BUILD Query #####
+#### BUILD Query OLD TO REPLACE#####
 #' @title build
 #' @description buold the corresponding query in the object (sparql_query_object)
 ## @input param_data : data.frame that elicit element parameter in the query, it should be contain 2 columns : parameter, value and contain exactly 1 row by query parameter
@@ -182,9 +180,8 @@ setGeneric(name="build",
              standardGeneric("build")
            })
 setMethod(f="build",signature="SPARQL_query_builder",function(object,param_data){
-
   pref_string<-paste(unlist(apply(X = getPrefix(object), 1,FUN = function(X){
-      return(computePrefix(uri=X[2],prefix=X[1]))
+    return(computePrefix(uri=X[2],prefix=X[1]))
   })),collapse = "")
   from_string<- paste(unlist(lapply(X = getGraph(object), FUN = function(X){
     return(computeGraph(X))
@@ -199,6 +196,100 @@ setMethod(f="build",signature="SPARQL_query_builder",function(object,param_data)
 
   }
   return(paste(c(pref_string, selection_string, from_string, bodyQuery_string),collapse=" \n "))
+
+})
+
+#### BUILD Query NEW#####
+#' @title build
+#' @description buold the corresponding query in the object (sparql_query_object)
+## @input param_data : data.frame that elicit element parameter in the query, it should be contain 2 columns : parameter, value and contain exactly 1 row by query parameter
+## @input keep : elements that should be return by the query, if keep is empty all query eement will be return (?XXX)
+#' @export
+setGeneric(name="buildQuery",
+           def=function(object,param_data){
+             standardGeneric("buildQuery")
+           })
+setMethod(f="buildQuery",signature="SPARQL_query_builder",function(object,param_data){
+  method_by_type<-getMethodNames()
+  query<-NA
+  if(getMethod(object)%in%method_by_type$graph_query){
+    print("in buildGraphQuery")
+    query<-buildGraphQuery(object)
+  }else if(getMethod(object)%in%method_by_type$data_query){
+    print("in buildDataQuery")
+    print(getMethod(object))
+    query<-buildDataQuery(object,param_data)
+  }else if(getMethod(object)%in%method_by_type$data_mng){
+    print('in buildTripleManagment')
+    query<-buildTripleManagment(object, param_data)
+  }
+})
+
+#### BUILD Triple Management Query #####
+#' @title build
+#' @description buold the corresponding query in the object (sparql_query_object)
+setGeneric(name="buildTripleManagment",
+           def=function(object,param_data){
+             standardGeneric("buildTripleManagment")
+           })
+setMethod(f="buildTripleManagment",signature="SPARQL_query_builder",function(object,param_data){
+  warning("UNIMPLEMENTED DATA MANAGEMENT")
+  return(NA)
+})
+
+#### BUILD Data Query #####
+#' @title build
+#' @description bulid the corresponding query in the object (sparql_query_object)
+
+setGeneric(name="buildDataQuery",
+           def=function(object,param_data){
+             standardGeneric("buildDataQuery")
+           })
+setMethod(f="buildDataQuery",signature="SPARQL_query_builder",function(object,param_data){
+  pref_string<-paste(unlist(apply(X = getPrefix(object), 1,FUN = function(X){
+    return(computePrefix(uri=X[2],prefix=X[1]))
+  })),collapse = "")
+  from_string<- paste(unlist(lapply(X = getGraph(object), FUN = function(X){
+    return(computeGraph(X))
+  })),collapse=" ")
+
+  selection_string<-computeSelect(getConstraint(object)[["element"]])
+
+  if(length(getParameterConstraint(object))==0){
+    bodyQuery_string<-computeBodyConstraint(getConstraint(object))
+  }else {
+    bodyQuery_string<-computeBodyConstraint(getConstraint(object),param_data )
+
+  }
+  return(paste(c(pref_string, selection_string, from_string, bodyQuery_string),collapse=" \n "))
+
+})
+
+
+
+#### BUILD Graph Query #####
+#' @title build
+#' @description build DROP and CREATE SPARQL query
+setGeneric(name="buildGraphQuery",
+           def=function(object){
+             standardGeneric("buildGraphQuery")
+           })
+setMethod(f="buildGraphQuery",signature="SPARQL_query_builder",function(object){
+  ### CREATE/DROP/CLEAR GRAPH <uri>
+    ### Contrainte 1! Graph
+          ##### METHODE available : CREATE/DROP/CLEAR
+  g<-getGraph(object)
+  returnText<-NA
+  if(length(g)<1){
+    warning("[build] Un-availability of building SPARQL graph query (CREATE, DROP, CLEAR) :  no graph uri referenced into object")
+  }else {
+    if(length(g)>1){
+      warning(paste("[build] Multiple graph refers in SPARQL graph query (CREATE, DROP, CLEAR) query : only the first element will be used",
+                    sep=" \n ", g[[1]]))
+    }
+    returnText<-computeGraphQueryPattern(method=getMethod(object),graph=g[[1]])
+    }
+    return(returnText)
 
 })
 
@@ -232,9 +323,8 @@ computeSelect<-function(elements){
   return(paste("SELECT", data))
 }
 
-
 computeBodyConstraint<-function(constraint_data, param_data=NULL){
-
+  print(head(param_data))
   #### envoie une liste maintenant
   c_data<-constraint_data[["constraintDescription"]]
   p_data<-constraint_data[["parameters"]]
@@ -245,6 +335,7 @@ computeBodyConstraint<-function(constraint_data, param_data=NULL){
   }else{
     data <- paste(unique(c_data$string), collapse=" . \n ")
     if( length(p_data) >0 ){
+      print(names(param_data))
       if(! missing(param_data) && setequal(names(param_data),c("parameter","value"))
          && length(setdiff(p_data, param_data$parameter))==0){
         if(length(unique(param_data$parameter)) < length(param_data$parameter)){
@@ -256,6 +347,8 @@ computeBodyConstraint<-function(constraint_data, param_data=NULL){
           print(data)
       }else{
         data<-character(0)
+        print(param_data$parameter)
+        print(p_data)
         stop("[build Body string] missing parameters or unapporpriate parameter_data structure")
       }
     }
@@ -264,16 +357,29 @@ computeBodyConstraint<-function(constraint_data, param_data=NULL){
   return(paste(c(" WHERE{",data,"}"),collaspe =" "))
 }
 
-computeBodyConstraint_old<-function(constraint_data){
-  if(nrow(constraint_data) == 0){
-    data <-"?s ?p ?o"
+
+computeGraphQueryPattern<-function(method=NA,graph=NA){
+  data <- "<<METHOD>> GRAPH <<<URI>>>"
+  if(all(!is.na(c(method,graph)))&& ! (method =="" && graph=="")){
+    data<-gsub(x=data, pattern = "<<METHOD>>",replacement = method)
+    data<-gsub(x=data, pattern = "<<URI>>",replacement = graph)
+    return(data)
   }else{
-    data <- paste(unique(constraint_data$string), collapse=" . \n ")
+    stop("[build] missing method or graph mandatory information")
+
   }
-  return(paste(c(" WHERE{",data,"}"),collaspe =" "))
+
+
 }
 
-
-
-
-
+getMethodNames<-function(){
+  return(list(data_query=c("SELECT","INSERT"),
+              data_mng=c("INSERT DATA"),
+              graph_query=c("CREATE","CLEAR","DELETE","DROP")))
+}
+matchMethod<-function(x){
+  x<-normalize(x)
+  print(x)
+  x[which(!x%in%unlist(getMethodNames()))]<-"SELECT"
+  return(x)
+}
