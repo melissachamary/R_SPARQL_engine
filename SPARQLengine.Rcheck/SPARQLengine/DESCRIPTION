@@ -1,0 +1,15 @@
+Package: SPARQLengine
+Type: Package
+Title: SPARQL Engine tool
+Version: 0.0.1
+Author: Mélissa MARY
+Maintainer: <melissa.mary.epitrack@gmail.com>
+Description: Class and function to manage creation and execution of SPARQL query. In this version it enable to use only simple SELECT query in get method.
+License: MIT
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
+Imports: data.table, httr, RCurl, jsonlite
+NeedsCompilation: no
+Packaged: 2019-05-28 08:18:18 UTC; melissa
+Built: R 3.4.4; ; 2019-05-28 08:18:23 UTC; unix

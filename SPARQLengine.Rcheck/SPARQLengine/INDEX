@@ -1,0 +1,32 @@
+SPARQL_query_builder-class
+                        SPARQL_query_builder class enable to make some
+                        simple and parametric SPARQL queries
+addConstraint           addConstraint
+addConstraintFrame      addConstraintFrame
+addPrefix               addPrefix WARNING : unimplemented
+build                   build
+buildDataQuery          build
+buildGraphQuery         build
+buildQuery              build
+buildTripleManagment    build
+check_connection        check connection test httr_status of simple
+                        connection object call by GET. Stop if status
+connection_object-class
+                        connection_object class enable to connect
+createQueryObjectListFromFile
+                        createQueryObjectListFromFile
+createQueryObjectListFromList
+                        createQueryObjectListFromList
+create_connection       create_connection function to create
+                        connection_object. It checks that spar
+getConstraint           getConstraint
+getGraph                getGraph
+getMethod               getMethod
+getParameterConstraint
+                        getParameterConstraint
+getPrefix               getPrefix
+getTemplateQueryParameter
+                        getTemplateQueryParameter
+hello                   Hello, World!
+sparqlGet               sparqlGet sparql query using get http method
+sparqlQuery             sparqlQuery sparql query using POST curl method
